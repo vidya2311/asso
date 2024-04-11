@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Location Map</title>
+     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+    <style>
+         #map {
+            height: 400px;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+ 
+        const userLatitude = parseFloat(getUrlParameter('userLat'));
+        const userLongitude = parseFloat(getUrlParameter('userLng'));
+        const memberLatitude = parseFloat(getUrlParameter('memberLat'));
+        const memberLongitude = parseFloat(getUrlParameter('memberLng'));
+
+        
+        const map = L.map('map').setView([userLatitude, userLongitude], 10); // Set initial view to user's location
+
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+         
+        const userMarker = L.marker([userLatitude, userLongitude]).addTo(map);
+        userMarker.bindPopup('<b>Me</b>').openPopup(); // Popup with "Me" label
+
+        
+        const memberMarker = L.marker([memberLatitude, memberLongitude]).addTo(map);
+        memberMarker.bindPopup('<b>Member</b>').openPopup(); // Popup with member's label
+
+         
+        function getUrlParameter(name) {
+            name = name.replace(/[[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+    </script>
+</body>
+</html>
