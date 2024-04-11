@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Sports Quiz</title>
+    <style>
+       body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            background: url('images/sprts.jpg') center/cover no-repeat;
+
+
+        }
+
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #030303;
+            font-size: 16px;
+        }
+
+
+        .container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+
+        .container ul {
+            list-style: none;
+            padding-left: 0;
+            text-align: left;
+        }
+
+
+        .container li {
+            margin-bottom: 10px;
+        }
+
+
+        .container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+
+        .container button:hover {
+            background-color: #45a049;
+        }
+
+
+        #quiz-container {
+            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #010101;
+            font-size: 16px;
+        }
+
+
+        #quiz-container #question-number {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #options {
+            text-align: left;
+        }
+
+
+        #quiz-container input[type="radio"] {
+            margin-right: 5px;
+        }
+
+
+        #quiz-container label {
+            margin-bottom: 10px;
+            display: block;
+        }
+
+
+        #quiz-container #timer {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #prevButton,
+        #quiz-container #nextButton,
+        #quiz-container #submitButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+
+        #quiz-container #submitButton {
+            background-color: #f44336;
+            display: none; /* Initially hidden */
+        }
+
+
+        #quiz-container #submitButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container" id="instructions">
+    <!-- Instructions related to sports -->
+    <h2>Instructions:</h2>
+    <ul>
+        <li>Number of Questions: The quiz consists of 10 multiple-choice questions related to Indian sports.</li>
+        <li>Time Limit: You have 15 seconds to answer each question. If you fail to select an option within the time limit, the question will be automatically replaced with another one.</li>
+        <li>Navigation: Use the "Next" button to move to the next question and the "Previous" button to go back to the previous question.</li>
+        <li>Submitting the Quiz: Once you've answered all 10 questions, the "Submit Quiz" button will appear. Click it to submit your answers.</li>
+        <li>Scoring: Your score will be calculated based on the number of correct answers. You need to answer at least 5 questions correctly to proceed to the next page.</li>
+        <li>Timer: A timer will be displayed for each question, showing the time remaining to answer.</li>
+        <li>Consecutive Unanswered Questions: If you fail to answer three consecutive questions within the time limit, you will be redirected, and you won't be able to attempt the quiz again for the next 24 hours.</li>
+        <li>Enjoy the Quiz: Immerse yourself in the world of Indian sports and test your knowledge! Good luck!</li>
+    </ul>
+    <!-- Start Quiz button -->
+    <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+
+<div class="container" id="quiz-container">
+    <!-- Display question number -->
+    <div id="question-number"></div>
+    <!-- Display current question -->
+    <div id="question"></div>
+    <!-- Display options for the question -->
+    <div id="options"></div>
+    <!-- Timer for each question -->
+    <div id="timer">Time remaining: <span id="time">15</span> seconds</div>
+    <!-- Buttons for navigation and quiz submission -->
+    <button id="prevButton" onclick="prevQuestion()" disabled>Previous</button>
+    <button id="nextButton" onclick="nextQuestion()">Next</button>
+    <button id="submitButton" onclick="submitQuiz()">Submit Quiz</button>
+</div>
+
+
+<script>
+    let swapCounter = 0;
+    let consecutiveUnanswered = 0;
+    let lastSwapTimestamp = null;
+    const swapLimit = 3;
+    const swapInterval = 24 * 60 * 60 * 1000;
+
+
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let unansweredQuestions = 0;
+    let timer;
+
+
+    function startQuiz() {
+        shuffleQuestions();
+        quizData = allQuestions.slice(0, 10);
+        showQuestion();
+        timer = setInterval(updateTimer, 1000);
+        document.getElementById("instructions").style.display = "none";
+        document.getElementById("quiz-container").style.display = "block";
+    }
+
+
+    function shuffleQuestions() {
+        // Fisher-Yates shuffle algorithm
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+
+    function showQuestion() {
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const questionNumberElement = document.getElementById("question-number");
+        const prevButton = document.getElementById("prevButton");
+        const currentQuestion = quizData[currentQuestionIndex];
+
+
+        questionNumberElement.textContent = `Question ${currentQuestionIndex + 1} of 10`;
+        questionElement.textContent = currentQuestion.question;
+        optionsElement.innerHTML = "";
+
+
+        currentQuestion.options.forEach((option, index) => {
+            const radioBtn = document.createElement("input");
+            radioBtn.type = "radio";
+            radioBtn.name = "answer";
+            radioBtn.value = index;
+            radioBtn.addEventListener("change", () => selectOption(index));
+
+
+            const label = document.createElement("label");
+            label.textContent = String.fromCharCode(65 + index) + ') ' + option;
+
+
+            optionsElement.appendChild(radioBtn);
+            optionsElement.appendChild(label);
+            optionsElement.appendChild(document.createElement("br"));
+        });
+
+
+        prevButton.disabled = currentQuestionIndex === 0;
+    }
+
+
+    function selectOption(index) {
+        quizData[currentQuestionIndex].selectedAnswer = index;
+    }
+
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            const selectedRadio = document.querySelector('input[name="answer"]:checked');
+            if (selectedRadio) {
+                quizData[currentQuestionIndex].selectedAnswer = parseInt(selectedRadio.value);
+            }
+            currentQuestionIndex--;
+            showQuestion();
+            resetTimer();
+            const previousSelectedAnswer = quizData[currentQuestionIndex].selectedAnswer;
+            if (previousSelectedAnswer !== undefined) {
+                const radioBtns = document.querySelectorAll('input[name="answer"]');
+                radioBtns[previousSelectedAnswer].checked = true;
+            }
+        }
+    }
+
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+            resetTimer();
+        } else {
+            document.getElementById("nextButton").disabled = true;
+            document.getElementById("submitButton").style.display = "block";
+        }
+    }
+
+
+    function updateTimer() {
+    const timeElement = document.getElementById("time");
+    let time = parseInt(timeElement.textContent);
+
+
+    if (time > 0) {
+        time--;
+        timeElement.textContent = time;
+    } else {
+        unansweredQuestions++;
+        if (unansweredQuestions >= 3) {
+            redirectToBlockPage();
+        } else {
+            replaceQuestion();
+        }
+    }
+}
+
+
+function replaceQuestion() {
+    const randomIndex = Math.floor(Math.random() * allQuestions.length);
+    quizData[currentQuestionIndex] = allQuestions[randomIndex];
+    showQuestion();
+    resetTimer();
+}
+
+
+function redirectToBlockPage() {
+    window.location.href = "trysports.html";
+}
+
+
+
+
+    function resetTimer() {
+        const timeElement = document.getElementById("time");
+        timeElement.textContent = 15;
+    }
+
+
+    function submitQuiz() {
+    clearInterval(timer);
+
+
+    if (currentQuestionIndex === quizData.length - 1) {
+        quizData.forEach((question) => {
+            if (question.selectedAnswer === question.correctAnswer) {
+                correctAnswers++;
+            }
+        });
+
+
+        if (correctAnswers >= 5) {
+        // If the user correctly answered at least 5 questions, redirect to the appropriate server route
+        window.location.href = "sportsmem.html";
+    } else {
+        // If the user did not answer at least 5 questions correctly, display an alert
+        alert("You need to answer at least 5 questions correctly to proceed.");
+         window.location.href = "home.html";
+    }
+
+
+        document.getElementById("prevButton").disabled = true;
+        document.getElementById("nextButton").disabled = true;
+        document.getElementById("submitButton").style.display = "none";
+    } else {
+        alert("Please complete all 10 questions before submitting.");
+    }
+}
+
+
+
+
+function resetQuiz() {
+     currentQuestionIndex = 0;
+    correctAnswers = 0;
+    unansweredQuestions = 0;
+    clearInterval(timer);
+    window.location.href = "sportsquiz.html";  
+}
+
+
+const allQuestions = [
+    {
+        Question: 1,
+        question: "What is the capital of Canada?",
+        options: ["Ottawa", "Toronto", "Vancouver", "Montreal"],
+        correctAnswer: 0
+    },
+    {
+        Question: 2,
+        question: "Who is known as the 'God of Cricket' in India?",
+        options: ["Sachin Tendulkar", "Virat Kohli", "Rahul Dravid", "Sunil Gavaskar"],
+        correctAnswer: 0
+    },
+    {
+        Question: 3,
+        question: "In which year did India win its first Olympic gold medal in field hockey?",
+        options: ["1928", "1932", "1948", "1952"],
+        correctAnswer: 0
+    },
+    {
+        Question: 4,
+        question: "Which Indian athlete is known as the 'Flying Sikh'?",
+        options: ["Milkha Singh", "P.T. Usha", "Dhyan Chand", "Balbir Singh Sr."],
+        correctAnswer: 0
+    },
+    {
+        Question: 5,
+        question: "What is the national sport of India?",
+        options: ["Hockey", "Cricket", "Football", "Kabaddi"],
+        correctAnswer: 0
+    },
+    {
+        Question: 6,
+        question: "In which sport did P.V. Sindhu win a silver medal at the 2016 Rio Olympics?",
+        options: ["Badminton", "Table Tennis", "Shooting", "Wrestling"],
+        correctAnswer: 0
+    },
+    {
+        Question: 7,
+        question: "Who is the captain of the Indian cricket team as of 2022?",
+        options: ["Virat Kohli", "Rohit Sharma", "Ajinkya Rahane", "KL Rahul"],
+        correctAnswer: 0
+    },
+    {
+        Question: 8,
+        question: "Which city hosted the Commonwealth Games in India in 2010?",
+        options: ["New Delhi", "Mumbai", "Chennai", "Kolkata"],
+        correctAnswer: 0
+    },
+    {
+        Question: 9,
+        question: "Who won India's first individual gold medal at the Olympics?",
+        options: ["Abhinav Bindra", "Vijender Singh", "Leander Paes", "Sushil Kumar"],
+        correctAnswer: 0
+    },
+    {
+        Question: 10,
+        question: "In kabaddi, how many players are there on each side during a match?",
+        options: ["7", "5", "6", "8"],
+        correctAnswer: 0
+    },
+    {
+        Question: 11,
+        question: "Which Indian wrestler won a bronze medal at the 2021 Tokyo Olympics?",
+        options: ["Ravi Dahiya", "Bajrang Punia", "Deepak Punia", "Vinesh Phogat"],
+        correctAnswer: 0
+    },
+    {
+        Question: 12,
+        question: "Who is known as the 'Sultan of Multan' in cricket?",
+        options: ["Virender Sehwag", "Sachin Tendulkar", "Rahul Dravid", "Yuvraj Singh"],
+        correctAnswer: 0
+    },
+    {
+        Question: 13,
+        question: "What is the name of the Indian Premier League (IPL) team based in Kolkata?",
+        options: ["Kolkata Knight Riders", "Mumbai Indians", "Chennai Super Kings", "Royal Challengers Bangalore"],
+        correctAnswer: 0
+    },
+    {
+        Question: 14,
+        question: "In badminton, what is the scoring system called?",
+        options: ["Rally System", "Points System", "Match System", "Shuttle System"],
+        correctAnswer: 0
+    },
+    {
+        Question: 15,
+        question: "Who is the highest run-scorer in international cricket for India?",
+        options: ["Virat Kohli", "Sachin Tendulkar", "Rahul Dravid", "Sunil Gavaskar"],
+        correctAnswer: 0
+    },
+    {
+        Question: 16,
+        question: "Which Indian tennis player has won multiple Grand Slam titles in doubles?",
+        options: ["Leander Paes", "Mahesh Bhupathi", "Sania Mirza", "Rohan Bopanna"],
+        correctAnswer: 0
+    },
+    {
+        Question: 17,
+        question: "In which year did India host the FIFA U-17 World Cup?",
+        options: ["2017", "2018", "2019", "2020"],
+        correctAnswer: 0
+    },
+    {
+        Question: 18,
+        question: "Who is known as the 'Magician of Hockey' in India?",
+        options: ["Dhyan Chand", "Milkha Singh", "Balbir Singh Sr.", "P.T. Usha"],
+        correctAnswer: 0
+    },
+    {
+        Question: 19,
+        question: "Which Indian boxer won a bronze medal at the 2012 London Olympics?",
+        options: ["Vijender Singh", "Mary Kom", "Manoj Kumar", "Shiva Thapa"],
+        correctAnswer: 0
+    },
+    {
+        Question: 20,
+        question: "What is the name of the Indian men's national football team coach as of 2022?",
+        options: ["Igor Stimac", "Stephen Constantine", "Wim Koevermans", "Bob Houghton"],
+        correctAnswer: 0
+    },
+    {
+        Question: 21,
+        question: "Who won the gold medal in shooting at the 2008 Beijing Olympics for India?",
+        options: ["Abhinav Bindra", "Gagan Narang", "Rajyavardhan Singh Rathore", "Vijay Kumar"],
+        correctAnswer: 0
+    },
+    {
+        Question: 22,
+        question: "In chess, who is India's first Grandmaster?",
+        options: ["Viswanathan Anand", "Vishwanathan Anand", "Anatoly Karpov", "Garry Kasparov"],
+        correctAnswer: 0
+    },
+    {
+        Question: 23,
+        question: "Which Indian city is known as the 'Sports Capital of India'?",
+        options: ["Bangalore", "Mumbai", "Chennai", "Kolkata"],
+        correctAnswer: 0
+    },
+    {
+        Question: 24,
+        question: "What is the duration of a standard game of cricket, excluding Test matches?",
+        options: ["50 Overs", "40 Overs", "20 Overs", "10 Overs"],
+        correctAnswer: 0
+    },
+    {
+        Question: 25,
+        question: "Who is the only Indian cricketer to score a century in all three formats of the game?",
+        options: ["Virat Kohli", "Rohit Sharma", "Shikhar Dhawan", "KL Rahul"],
+        correctAnswer: 0
+    },
+    {
+        Question: 26,
+        question: "In which year did Abhinav Bindra win India's first individual Olympic gold in shooting?",
+        options: ["2008", "2004", "2012", "2016"],
+        correctAnswer: 0
+    },
+    {
+        Question: 27,
+        question: "What is the name of the highest civilian award given for achievements in sports in India?",
+        options: ["Rajiv Gandhi Khel Ratna", "Padma Bhushan", "Padma Vibhushan", "Bharat Ratna"],
+        correctAnswer: 0
+    },
+    {
+        Question: 28,
+        question: "Which Indian athlete won a gold medal in the javelin throw at the 2020 Tokyo Olympics?",
+        options: ["Neeraj Chopra", "Dutee Chand", "Hima Das", "Annu Rani"],
+        correctAnswer: 0
+    },
+    {
+        Question: 29,
+        question: "Who is known as the 'Captain Cool' in Indian cricket?",
+        options: ["MS Dhoni", "Sachin Tendulkar", "Virat Kohli", "Rahul Dravid"],
+        correctAnswer: 0
+    },
+    {
+        Question: 30,
+        question: "In which year did India win the Cricket World Cup for the first time?",
+        options: ["1983", "1987", "1992", "1996"],
+        correctAnswer: 0
+    },
+    {
+        Question: 31,
+        question: "Who is the first Indian woman to win an Olympic silver medal in wrestling?",
+        options: ["Sakshi Malik", "Geeta Phogat", "Vinesh Phogat", "Pooja Dhanda"],
+        correctAnswer: 0
+    },
+    {
+        Question: 32,
+        question: "Which Indian chess player became the World Chess Champion in 2000?",
+        options: ["Vishwanathan Anand", "Viswanathan Anand", "Anatoly Karpov", "Garry Kasparov"],
+        correctAnswer: 0
+    },
+    {
+        Question: 33,
+        question: "What is the nickname of the Indian national football team?",
+        options: ["The Blue Tigers", "The Tigers", "The Lions", "The Elephants"],
+        correctAnswer: 0
+    },
+    {
+        Question: 34,
+        question: "Who is the first Indian woman to win a medal at the Olympic Games?",
+        options: ["Anju Bobby George", "Sakshi Malik", "Karnam Malleswari", "P.T. Usha"],
+        correctAnswer: 0
+    },
+    {
+        Question: 35,
+        question: "In which sport did Milkha Singh excel, earning him the title 'The Flying Sikh'?",
+        options: ["Sprint", "Long Jump", "Javelin Throw", "Discus Throw"],
+        correctAnswer: 0
+    },
+    {
+        Question: 36,
+        question: "Who is the Indian footballer known for his bicycle kicks and acrobatic goal celebrations?",
+        options: ["Sunil Chhetri", "Jeje Lalpekhlua", "Sandesh Jhingan", "Eugeneson Lyngdoh"],
+        correctAnswer: 0
+    },
+    {
+        Question: 37,
+        question: "What is the name of the trophy awarded to the winner of the Ranji Trophy in cricket?",
+        options: ["Ranji Trophy", "Duleep Trophy", "Vijay Hazare Trophy", "Deodhar Trophy"],
+        correctAnswer: 0
+    },
+    {
+        Question: 38,
+        question: "Which Indian cricketer is nicknamed 'Jammy'?",
+        options: ["Rahul Dravid", "Sachin Tendulkar", "Anil Kumble", "Virender Sehwag"],
+        correctAnswer: 0
+    },
+    {
+        Question: 39,
+        question: "In athletics, which event is Anju Bobby George associated with?",
+        options: ["Long Jump", "Javelin Throw", "Discus Throw", "High Jump"],
+        correctAnswer: 0
+    },
+    {
+        Question: 40,
+        question: "Who is the first Indian to win an individual gold medal at the Paralympics?",
+        options: ["Devendra Jhajharia", "Deepa Malik", "Mariyappan Thangavelu", "Jhulan Goswami"],
+        correctAnswer: 0
+    },
+    {
+        Question: 41,
+        question: "Which Indian city is home to the Brabourne Stadium?",
+        options: ["Mumbai", "Kolkata", "Chennai", "Delhi"],
+        correctAnswer: 0
+    },
+    {
+        Question: 42,
+        question: "In which year did Viswanathan Anand become the World Chess Champion for the first time?",
+        options: ["2000", "2005", "2007", "2010"],
+        correctAnswer: 0
+    },
+    {
+        Question: 43,
+        question: "Who is the Indian squash player known as the 'Beast'?",
+        options: ["Saurav Ghosal", "Dipika Pallikal", "Joshna Chinappa", "Harinder Pal Sandhu"],
+        correctAnswer: 0
+    },
+    {
+        Question: 44,
+        question: "What is the highest team score by India in a One Day International (ODI) match?",
+        options: ["491/4", "365/5", "404/5", "458/4"],
+        correctAnswer: 0
+    },
+    {
+        Question: 45,
+        question: "Which Indian female gymnast represented the country at the Olympics in 2016 and 2020?",
+        options: ["Dipa Karmakar", "Aruna Reddy", "Pranati Nayak", "Simone Biles"],
+        correctAnswer: 0
+    },
+    {
+        Question: 46,
+        question: "Who is the current captain of the Indian women's cricket team?",
+        options: ["Mithali Raj", "Harmanpreet Kaur", "Smriti Mandhana", "Jhulan Goswami"],
+        correctAnswer: 0
+    },
+    {
+        Question: 47,
+        question: "In which year did India win its first-ever Test series in Australia?",
+        options: ["2018-19", "2014-15", "2007-08", "2003-04"],
+        correctAnswer: 0
+    },
+    {
+        Question: 48,
+        question: "What is the name of the Indian Grand Prix circuit for Formula One racing?",
+        options: ["Buddh International Circuit", "Jaypee Greens Circuit", "Greater Noida Circuit", "Yamuna Expressway Circuit"],
+        correctAnswer: 0
+    },
+    {
+        Question: 49,
+        question: "Which Indian athlete holds the national record for the long jump?",
+        options: ["Anju Bobby George", "Neeraj Chopra", "Milkha Singh", "Suresh Babu"],
+        correctAnswer: 0
+    },
+    {
+        Question: 50,
+        question: "Who is the only Indian cricketer to score two double centuries in ODIs?",
+        options: ["Rohit Sharma", "Virat Kohli", "Sachin Tendulkar", "Virender Sehwag"],
+        correctAnswer: 0
+    }
+];
+
+
+
+
+</script>
+
+
+</body>
+</html>
