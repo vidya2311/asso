@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Try Again</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #2c3e50;  
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            text-align: center;
+            padding: 40px;
+            border-radius: 10px;
+            background-color: #ffffff;  
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);  
+            max-width: 400px;  
+            width: 80%;  
+        }
+
+        h1 {
+            color: #e74c3c;  
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 20px;
+            color: #333;
+            margin-bottom: 30px;
+        }
+
+        .container {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Oops!</h1>
+    <p>It seems you've reached the limit of unanswered questions. You have the option to try the quiz again!</p>
+ <button onclick="tryAgain('${clickedCommunity}')">Try Again</button>
+    <p id="timer"></p>
+</div>
+
+<script>
+    function tryAgain() {
+         document.querySelector("button").disabled = true;
+        
+        var secondsLeft = 60;
+        var timer = setInterval(function() {
+            document.getElementById("timer").innerText = "Redirecting in " + secondsLeft + " seconds...";
+            secondsLeft--;
+            if (secondsLeft < 0) {
+                clearInterval(timer);
+                 window.location.href = "dancequiz.html";
+            }
+        }, 1000);  
+    }
+</script>
+
+</body>
+</html>
