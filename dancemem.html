@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dance Community</title>
+    <style>
+           
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f2f2f2;
+            margin: 0;
+            padding: 0;
+            background: url('images/dnc.jpg') center/cover no-repeat;
+
+
+        }
+   
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+   
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+   
+        .member {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+   
+        .member h3 {
+            margin-top: 0;
+            font-size: 20px;
+            color: #efbc99;
+        }
+   
+        .member p {
+            margin: 10px 0;
+            font-size: 16px;
+            color: #555;
+        }
+   
+        .options {
+            margin-top: 20px;
+            text-align: center;
+        }
+   
+        .options button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            background-color: #efbc99;  
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+   
+        .options button:last-child {
+            margin-right: 0;
+        }
+    </style>
+
+
+   
+</head>
+<body>
+    <div class="container">
+        <h1>Sports Community</h1>
+        <div id="communityMembers"></div>
+    </div>
+
+
+    <script>
+        window.onload = () => {
+             const members = [
+    {
+        username: "Ashwin",
+        email: "ashwin@gmail.com",
+        bio: "Hello, I am ashwin and I am passionate about classical dance forms.",
+        coordinates: { latitude: 28.7041, longitude: 77.1025 }  
+    },
+    {
+        username: "Riyansh",
+        email: "riyansh@gmail.com",
+        bio: "Hello, I am Riyansh and I excel in contemporary dance.",
+        coordinates: { latitude: 19.0760, longitude: 72.8777 }  
+    },
+    {
+        username: "Sneha",
+        email: "sneha@gmail.com",
+        bio: "Hello, I am Sneha and I love to express myself through hip-hop dance.",
+        coordinates: { latitude: 13.0827, longitude: 80.2707 }  
+    },
+    {
+        username: "Himu",
+        email: "himu@gmail.com",
+        bio: "Hello, I am Himu and I am skilled in breakdancing.",
+        coordinates: { latitude: 22.5726, longitude: 88.3639 }  
+    },
+    {
+        username: "Isha",
+        email: "isha@gmail.com",
+        bio: "Hello, I am Isha and I enjoy performing traditional folk dances.",
+        coordinates: { latitude: 12.9716, longitude: 77.5946 }  
+    }
+];
+
+
+             const communityMembersDiv = document.getElementById('communityMembers');
+            communityMembersDiv.innerHTML = '<h2>Community Members</h2>';
+            members.forEach(member => {
+                const memberDiv = document.createElement('div');
+                memberDiv.classList.add('member');
+                memberDiv.innerHTML = `
+                    <h3>${member.username}</h3>
+                    <p>Bio: ${member.bio}</p>
+                    <div class="options">
+                        <button onclick="getInTouch('${member.email}')">Get in Touch</button>
+                        <button onclick="checkLocation('${member.username}', ${member.coordinates.latitude}, ${member.coordinates.longitude})">Check Location</button>
+                    </div>
+                    <hr>
+                `;
+                communityMembersDiv.appendChild(memberDiv);
+            });
+        };
+
+
+        function getInTouch(email) {
+            window.location.href = 'mailto:' + email;
+        }
+
+
+        function checkLocation(username, memberLat, memberLng) {
+            getUserCoordinates()
+                .then(userCoords => {
+                    const params = new URLSearchParams({
+                        userLat: userCoords.latitude,
+                        userLng: userCoords.longitude,
+                        memberLat: memberLat,
+                        memberLng: memberLng
+                    });
+                    window.location.href = 'loc.html?' + params.toString();
+                })
+                .catch(error => console.error('Error fetching user coordinates:', error));
+        }
+
+
+        function getUserCoordinates() {
+            return new Promise((resolve, reject) => {
+                 const userCoords = { latitude: 18.5204, longitude: 73.8567 };  
+                resolve(userCoords);
+            });
+        }
+    </script>
+     <a href="dancemem.html">Go to Dance Members Page</a>
+</body>
+</html>
