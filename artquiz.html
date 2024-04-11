@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Indian Arts Quiz</title>
+    <style>
+       body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            background: url('images/arrt.jpg') center/cover no-repeat;
+
+
+        }
+
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #f4f4f4;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #0a0a0a;
+            font-size: 16px;
+        }
+
+
+        .container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+
+        .container ul {
+            list-style: none;
+            padding-left: 0;
+            text-align: left;
+        }
+
+
+        .container li {
+            margin-bottom: 10px;
+        }
+
+
+        .container button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+
+        .container button:hover {
+            background-color: #45a049;
+        }
+
+
+        #quiz-container {
+            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #f7fcfb;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #020202;
+            font-size: 16px;
+        }
+
+
+        #quiz-container #question-number {
+            font-size: 14px;
+            color: #020202;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #options {
+            text-align: left;
+        }
+
+
+        #quiz-container input[type="radio"] {
+            margin-right: 5px;
+        }
+
+
+        #quiz-container label {
+            margin-bottom: 10px;
+            display: block;
+        }
+
+
+        #quiz-container #timer {
+            font-size: 14px;
+            color: #020202;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #prevButton,
+        #quiz-container #nextButton,
+        #quiz-container #submitButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+
+        #quiz-container #submitButton {
+            background-color: #f44336;
+            display: none;  
+        }
+
+
+        #quiz-container #submitButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container" id="instructions">
+     <h2>Instructions:</h2>
+    <ul>
+        <li>Number of Questions: The quiz consists of 10 multiple-choice questions related to Indian sports.</li>
+        <li>Time Limit: You have 15 seconds to answer each question. If you fail to select an option within the time limit, the question will be automatically replaced with another one.</li>
+        <li>Navigation: Use the "Next" button to move to the next question and the "Previous" button to go back to the previous question.</li>
+        <li>Submitting the Quiz: Once you've answered all 10 questions, the "Submit Quiz" button will appear. Click it to submit your answers.</li>
+        <li>Scoring: Your score will be calculated based on the number of correct answers. You need to answer at least 5 questions correctly to proceed to the next page.</li>
+        <li>Timer: A timer will be displayed for each question, showing the time remaining to answer.</li>
+        <li>Consecutive Unanswered Questions: If you fail to answer three consecutive questions within the time limit, you will be redirected, and you won't be able to attempt the quiz again for the next 24 hours.</li>
+        <li>Enjoy the Quiz: Immerse yourself in the world of Indian sports and test your knowledge! Good luck!</li>
+    </ul>
+     <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+
+<div class="container" id="quiz-container">
+     <div id="question-number"></div>
+     <div id="question"></div>
+     <div id="options"></div>
+     <div id="timer">Time remaining: <span id="time">15</span> seconds</div>
+     <button id="prevButton" onclick="prevQuestion()" disabled>Previous</button>
+    <button id="nextButton" onclick="nextQuestion()">Next</button>
+    <button id="submitButton" onclick="submitQuiz()">Submit Quiz</button>
+</div>
+
+
+<script>
+    let swapCounter = 0;
+    let consecutiveUnanswered = 0;
+    let lastSwapTimestamp = null;
+    const swapLimit = 3;
+    const swapInterval = 24 * 60 * 60 * 1000;
+
+
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let unansweredQuestions = 0;
+    let timer;
+
+
+    function startQuiz() {
+        shuffleQuestions();
+        quizData = allQuestions.slice(0, 10);
+        showQuestion();
+        timer = setInterval(updateTimer, 1000);
+        document.getElementById("instructions").style.display = "none";
+        document.getElementById("quiz-container").style.display = "block";
+    }
+
+
+    function shuffleQuestions() {
+         for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+
+    function showQuestion() {
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const questionNumberElement = document.getElementById("question-number");
+        const prevButton = document.getElementById("prevButton");
+        const currentQuestion = quizData[currentQuestionIndex];
+
+
+        questionNumberElement.textContent = `Question ${currentQuestionIndex + 1} of 10`;
+        questionElement.textContent = currentQuestion.question;
+        optionsElement.innerHTML = "";
+
+
+        currentQuestion.options.forEach((option, index) => {
+            const radioBtn = document.createElement("input");
+            radioBtn.type = "radio";
+            radioBtn.name = "answer";
+            radioBtn.value = index;
+            radioBtn.addEventListener("change", () => selectOption(index));
+
+
+            const label = document.createElement("label");
+            label.textContent = `${String.fromCharCode(65 + index)}) ${option}`;
+
+
+            optionsElement.appendChild(radioBtn);
+            optionsElement.appendChild(label);
+            optionsElement.appendChild(document.createElement("br"));
+        });
+
+
+        prevButton.disabled = currentQuestionIndex === 0;
+    }
+
+
+    function selectOption(index) {
+        quizData[currentQuestionIndex].selectedAnswer = index;
+    }
+
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            const selectedRadio = document.querySelector('input[name="answer"]:checked');
+            if (selectedRadio) {
+                quizData[currentQuestionIndex].selectedAnswer = parseInt(selectedRadio.value);
+            }
+            currentQuestionIndex--;
+            showQuestion();
+            resetTimer();
+            const previousSelectedAnswer = quizData[currentQuestionIndex].selectedAnswer;
+            if (previousSelectedAnswer !== undefined) {
+                const radioBtns = document.querySelectorAll('input[name="answer"]');
+                radioBtns[previousSelectedAnswer].checked = true;
+            }
+        }
+    }
+
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+            resetTimer();
+        } else {
+            document.getElementById("nextButton").disabled = true;
+            document.getElementById("submitButton").style.display = "block";
+        }
+    }
+
+
+    function updateTimer() {
+    const timeElement = document.getElementById("time");
+    let time = parseInt(timeElement.textContent);
+
+
+    if (time > 0) {
+        time--;
+        timeElement.textContent = time;
+    } else {
+        unansweredQuestions++;
+        if (unansweredQuestions >= 3) {
+            redirectToBlockPage();
+        } else {
+            replaceQuestion();
+        }
+    }
+}
+
+
+function replaceQuestion() {
+    const randomIndex = Math.floor(Math.random() * allQuestions.length);
+    quizData[currentQuestionIndex] = allQuestions[randomIndex];
+    showQuestion();
+    resetTimer();
+}
+
+
+function redirectToBlockPage() {
+    window.location.href = "tryart.html";
+}
+
+
+
+
+    function resetTimer() {
+        const timeElement = document.getElementById("time");
+        timeElement.textContent = 15;
+    }
+
+
+    function submitQuiz() {
+    clearInterval(timer);
+
+
+    if (currentQuestionIndex === quizData.length - 1) {
+        quizData.forEach((question) => {
+            if (question.selectedAnswer === question.correctAnswer) {
+                correctAnswers++;
+            }
+        });
+
+
+        if (correctAnswers >= 5) {
+             window.location.href = "artmem.html";
+        } else {
+             alert("You need to answer at least 5 questions correctly to proceed to after.html.");
+             window.location.href = "home.html";
+        }
+
+
+        document.getElementById("prevButton").disabled = true;
+        document.getElementById("nextButton").disabled = true;
+        document.getElementById("submitButton").style.display = "none";
+    } else {
+        alert("Please complete all 10 questions before submitting.");
+    }
+}
+
+
+
+
+function resetQuiz() {
+     currentQuestionIndex = 0;
+    correctAnswers = 0;
+    unansweredQuestions = 0;
+    clearInterval(timer);
+    window.location.href = "artquiz.html";
+}
+
+
+    const allQuestions = [
+    {
+    Question: 1,
+    question: "Who painted the famous artwork 'The Starry Night'?",
+    options: ["Vincent van Gogh", "Pablo Picasso", "Claude Monet", "Leonardo da Vinci"],
+    correctAnswer: 0
+},
+{
+    Question: 2,
+    question: "What is the term for a painting executed directly onto a wall?",
+    options: ["Fresco", "Oil painting", "Watercolor", "Sculpture"],
+    correctAnswer: 0
+},
+{
+    Question: 3,
+    question: "Who sculpted the famous statue of David?",
+    options: ["Leonardo da Vinci", "Michelangelo", "Donatello", "Raphael"],
+    correctAnswer: 1
+},
+{
+    Question: 4,
+    question: "Which artistic movement is known for its use of geometric shapes and primary colors?",
+    options: ["Surrealism", "Cubism", "Abstract Expressionism", "Fauvism"],
+    correctAnswer: 1
+},
+{
+    Question: 5,
+    question: "The Mona Lisa was painted by which artist?",
+    options: ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"],
+    correctAnswer: 0
+},
+{
+    Question: 6,
+    question: "Who painted 'The Persistence of Memory,' featuring melting clocks?",
+    options: ["Pablo Picasso", "Salvador Dalí", "Joan Miró", "René Magritte"],
+    correctAnswer: 1
+},
+{
+    Question: 7,
+    question: "Which artist is known for his vibrant, folk-art-inspired paintings of flowers and animals?",
+    options: ["Georgia O'Keeffe", "Frida Kahlo", "Mary Cassatt", "Joan Mitchell"],
+    correctAnswer: 0
+},
+{
+    Question: 8,
+    question: "Who is considered the father of modern psychology?",
+    options: ["Sigmund Freud", "Carl Jung", "Ivan Pavlov", "B.F. Skinner"],
+    correctAnswer: 0
+},
+{
+    Question: 9,
+    question: "The novel '1984' was written by whom?",
+    options: ["George Orwell", "Aldous Huxley", "Ray Bradbury", "H.G. Wells"],
+    correctAnswer: 0
+},
+{
+    Question: 10,
+    question: "Who painted 'The Girl with a Pearl Earring'?",
+    options: ["Johannes Vermeer", "Rembrandt", "Vincent van Gogh", "Peter Paul Rubens"],
+    correctAnswer: 0
+},
+{
+    Question: 11,
+    question: "What is the name of the Greek god of the sea?",
+    options: ["Zeus", "Poseidon", "Apollo", "Hermes"],
+    correctAnswer: 1
+},
+{
+    Question: 12,
+    question: "Who composed the 'Moonlight Sonata'?",
+    options: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Franz Schubert"],
+    correctAnswer: 0
+},
+{
+    Question: 13,
+    question: "Who wrote the novel 'Pride and Prejudice'?",
+    options: ["Jane Austen", "Charles Dickens", "Emily Brontë", "Charlotte Brontë"],
+    correctAnswer: 0
+},
+{
+    Question: 14,
+    question: "Which musical term refers to a gradual increase in loudness?",
+    options: ["Crescendo", "Decrescendo", "Fortissimo", "Pianissimo"],
+    correctAnswer: 0
+},
+{
+    Question: 15,
+    question: "Who painted 'Guernica,' a depiction of the horrors of war?",
+    options: ["Pablo Picasso", "Salvador Dalí", "Henri Matisse", "Joan Miró"],
+    correctAnswer: 0
+},
+{
+    Question: 16,
+    question: "Who is the protagonist of F. Scott Fitzgerald's novel 'The Great Gatsby'?",
+    options: ["Jay Gatsby", "Nick Carraway", "Daisy Buchanan", "Tom Buchanan"],
+    correctAnswer: 0
+},
+{
+    Question: 17,
+    question: "Who composed 'Symphony No. 9'?",
+    options: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Franz Schubert"],
+    correctAnswer: 0
+},
+{
+    Question: 18,
+    question: "Who wrote the play 'Hamlet'?",
+    options: ["William Shakespeare", "Christopher Marlowe", "Ben Jonson", "John Milton"],
+    correctAnswer: 0
+},
+{
+    Question: 19,
+    question: "Who is the author of 'To Kill a Mockingbird'?",
+    options: ["Harper Lee", "Mark Twain", "F. Scott Fitzgerald", "Ernest Hemingway"],
+    correctAnswer: 0
+},
+{
+    Question: 20,
+    question: "What is the name of the technique used to create three-dimensional images in art?",
+    options: ["Sculpting", "Perspective", "Impressionism", "Trompe-l'œil"],
+    correctAnswer: 3
+},
+{
+    Question: 21,
+    question: "Who composed 'Symphony No. 9'?",
+    options: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Franz Schubert"],
+    correctAnswer: 0
+},
+{
+    Question: 22,
+    question: "Who wrote the novel 'The Catcher in the Rye'?",
+    options: ["J.D. Salinger", "F. Scott Fitzgerald", "Ernest Hemingway", "John Steinbeck"],
+    correctAnswer: 0
+},
+{
+    Question: 23,
+    question: "Who painted 'The Birth of Venus'?",
+    options: ["Sandro Botticelli", "Raphael", "Leonardo da Vinci", "Michelangelo"],
+    correctAnswer: 0
+},
+{
+    Question: 24,
+    question: "Who painted 'The Starry Night'?",
+    options: ["Vincent van Gogh", "Pablo Picasso", "Claude Monet", "Leonardo da Vinci"],
+    correctAnswer: 0
+},
+{
+    Question: 25,
+    question: "Which artist is known for his drip painting technique?",
+    options: ["Jackson Pollock", "Andy Warhol", "Mark Rothko", "Piet Mondrian"],
+    correctAnswer: 0
+},
+{
+    Question: 26,
+    question: "Who composed 'The Four Seasons'?",
+    options: ["Antonio Vivaldi", "Johann Sebastian Bach", "Wolfgang Amadeus Mozart", "Ludwig van Beethoven"],
+    correctAnswer: 0
+},
+{
+    Question: 27,
+    question: "Who painted 'The Last Supper'?",
+    options: ["Leonardo da Vinci", "Michelangelo", "Raphael", "Donatello"],
+    correctAnswer: 0
+},
+{
+    Question: 28,
+    question: "Who wrote the play 'Macbeth'?",
+    options: ["William Shakespeare", "Christopher Marlowe", "Ben Jonson", "John Milton"],
+    correctAnswer: 0
+},
+{
+    Question: 29,
+    question: "What is the name of the technique where pieces of colored paper are glued onto a surface to create an image?",
+    options: ["Collage", "Impasto", "Chiaroscuro", "Sfumato"],
+    correctAnswer: 0
+},
+{
+    Question: 30,
+    question: "Who painted 'American Gothic,' featuring a farmer and his daughter?",
+    options: ["Grant Wood", "Edward Hopper", "Norman Rockwell", "Georgia O'Keeffe"],
+    correctAnswer: 0
+},
+{
+    Question: 31,
+    question: "Who is the author of 'The Picture of Dorian Gray'?",
+    options: ["Oscar Wilde", "Mark Twain", "F. Scott Fitzgerald", "Ernest Hemingway"],
+    correctAnswer: 0
+},
+{
+    Question: 32,
+    question: "Who wrote the novel 'Moby-Dick'?",
+    options: ["Herman Melville", "Nathaniel Hawthorne", "Emily Dickinson", "Edgar Allan Poe"],
+    correctAnswer: 0
+},
+{
+    Question: 33,
+    question: "Who is known as the 'father of modern sculpture'?",
+    options: ["Auguste Rodin", "Alberto Giacometti", "Constantin Brâncuși", "Henry Moore"],
+    correctAnswer: 0
+},
+{
+    Question: 34,
+    question: "Who composed 'The Marriage of Figaro'?",
+    options: ["Wolfgang Amadeus Mozart", "Ludwig van Beethoven", "Johann Sebastian Bach", "Antonio Vivaldi"],
+    correctAnswer: 0
+},
+{
+    Question: 35,
+    question: "Who painted 'Las Meninas'?",
+    options: ["Diego Velázquez", "Francisco Goya", "El Greco", "Pablo Picasso"],
+    correctAnswer: 0
+},
+{
+    Question: 36,
+    question: "Who is the author of 'The Grapes of Wrath'?",
+    options: ["John Steinbeck", "Ernest Hemingway", "F. Scott Fitzgerald", "William Faulkner"],
+    correctAnswer: 0
+},
+{
+    Question: 37,
+    question: "Who composed 'Swan Lake'?",
+    options: ["Pyotr Ilyich Tchaikovsky", "Johann Sebastian Bach", "Ludwig van Beethoven", "Wolfgang Amadeus Mozart"],
+    correctAnswer: 0
+},
+{
+    Question: 38,
+    question: "Who is the protagonist of J.D. Salinger's novel 'The Catcher in the Rye'?",
+    options: ["Holden Caulfield", "Nick Carraway", "Jay Gatsby", "Atticus Finch"],
+    correctAnswer: 0
+},
+{
+    Question: 39,
+    question: "Who painted 'The Thinker,' a bronze sculpture of a man contemplating?",
+    options: ["Auguste Rodin", "Alberto Giacometti", "Constantin Brâncuși", "Henry Moore"],
+    correctAnswer: 0
+},
+{
+    Question: 40,
+    question: "Who wrote the novel 'Alice's Adventures in Wonderland'?",
+    options: ["Lewis Carroll", "J.R.R. Tolkien", "George Orwell", "C.S. Lewis"],
+    correctAnswer: 0
+},
+{
+    Question: 41,
+    question: "Who composed 'The Nutcracker'?",
+    options: ["Pyotr Ilyich Tchaikovsky", "Johann Sebastian Bach", "Ludwig van Beethoven", "Wolfgang Amadeus Mozart"],
+    correctAnswer: 0
+},
+{
+    Question: 42,
+    question: "Who is the author of 'The Scarlet Letter'?",
+    options: ["Nathaniel Hawthorne", "Emily Dickinson", "Herman Melville", "Edgar Allan Poe"],
+    correctAnswer: 0
+},
+{
+    Question: 43,
+    question: "Who painted 'Water Lilies'?",
+    options: ["Claude Monet", "Pablo Picasso", "Vincent van Gogh", "Georges Seurat"],
+    correctAnswer: 0
+},
+{
+    Question: 44,
+    question: "Who wrote the play 'A Streetcar Named Desire'?",
+    options: ["Tennessee Williams", "Arthur Miller", "Eugene O'Neill", "Samuel Beckett"],
+    correctAnswer: 0
+},
+{
+    Question: 45,
+    question: "Who composed 'The Magic Flute'?",
+    options: ["Wolfgang Amadeus Mozart", "Ludwig van Beethoven", "Johann Sebastian Bach", "Antonio Vivaldi"],
+    correctAnswer: 0
+},
+{
+    Question: 46,
+    question: "Who painted 'The Son of Man,' featuring a man in a bowler hat with an apple obscuring his face?",
+    options: ["René Magritte", "Salvador Dalí", "Pablo Picasso", "Vincent van Gogh"],
+    correctAnswer: 0
+},
+{
+    Question: 47,
+    question: "Who is the author of 'War and Peace'?",
+    options: ["Leo Tolstoy", "Fyodor Dostoevsky", "Anton Chekhov", "Ivan Turgenev"],
+    correctAnswer: 0
+},
+{
+    Question: 48,
+    question: "Who composed 'The Planets'?",
+    options: ["Gustav Holst", "Claude Debussy", "Igor Stravinsky", "Richard Strauss"],
+    correctAnswer: 0
+},
+{
+    Question: 49,
+    question: "Who is known as the 'father of modern ballet'?",
+    options: ["Jean-Georges Noverre", "Marius Petipa", "Vaslav Nijinsky", "George Balanchine"],
+    correctAnswer: 0
+},
+{
+    Question: 50,
+    question: "Who wrote the novel 'The Adventures of Huckleberry Finn'?",
+    options: ["Mark Twain", "Harper Lee", "F. Scott Fitzgerald", "Ernest Hemingway"],
+    correctAnswer: 0
+},
+
+
+    ];
+
+
+</script>
+
+
+</body>
+</html>
+
+
