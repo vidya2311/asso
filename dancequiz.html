@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dance Community Quiz</title>
+    <style>
+       body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            background: url('images/dnc.jpg') center/cover no-repeat;
+
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #f5fdfc;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #050505;
+            font-size: 16px;
+        }
+
+        .container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .container ul {
+            list-style: none;
+            padding-left: 0;
+            text-align: left;
+        }
+
+        .container li {
+            margin-bottom: 10px;
+        }
+
+        .container button {
+            background-color: #ddbda5;
+            color: rgb(18, 18, 18);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .container button:hover {
+            background-color: #ddbda5;
+        }
+
+        #quiz-container {
+            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #0a0a0a;
+            font-size: 16px;
+        }
+
+        #quiz-container #question-number {
+            font-size: 14px;
+            color: #050505;
+            margin-bottom: 10px;
+        }
+
+        #quiz-container #question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        #quiz-container #options {
+            text-align: left;
+        }
+
+        #quiz-container input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        #quiz-container label {
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        #quiz-container #timer {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+        #quiz-container #prevButton,
+        #quiz-container #nextButton,
+        #quiz-container #submitButton {
+            background-color: #ddbda5;
+            color: rgb(6, 6, 6);
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+        #quiz-container #submitButton {
+            background-color: #f44336;
+            display: none;  
+        }
+
+        #quiz-container #submitButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="instructions">
+     <h2>Instructions:</h2>
+    <ul>
+        <li>Number of Questions: The quiz consists of 10 multiple-choice questions related to Indian sports.</li>
+        <li>Time Limit: You have 15 seconds to answer each question. If you fail to select an option within the time limit, the question will be automatically replaced with another one.</li>
+        <li>Navigation: Use the "Next" button to move to the next question and the "Previous" button to go back to the previous question.</li>
+        <li>Submitting the Quiz: Once you've answered all 10 questions, the "Submit Quiz" button will appear. Click it to submit your answers.</li>
+        <li>Scoring: Your score will be calculated based on the number of correct answers. You need to answer at least 5 questions correctly to proceed to the next page.</li>
+        <li>Timer: A timer will be displayed for each question, showing the time remaining to answer.</li>
+        <li>Consecutive Unanswered Questions: If you fail to answer three consecutive questions within the time limit, you will be redirected, and you won't be able to attempt the quiz again for the next 24 hours.</li>
+        <li>Enjoy the Quiz: Immerse yourself in the world of Indian sports and test your knowledge! Good luck!</li>
+    </ul>
+     <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+<div class="container" id="quiz-container">
+     <div id="question-number"></div>
+     <div id="question"></div>
+     <div id="options"></div>
+     <div id="timer">Time remaining: <span id="time">15</span> seconds</div>
+     <button id="prevButton" onclick="prevQuestion()" disabled>Previous</button>
+    <button id="nextButton" onclick="nextQuestion()">Next</button>
+    <button id="submitButton" onclick="submitQuiz()">Submit Quiz</button>
+</div>
+
+<script>
+    let swapCounter = 0;
+    let consecutiveUnanswered = 0;
+    const swapLimit = 3;
+
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let unansweredQuestions = 0;
+    let timer;
+
+    function startQuiz() {
+        shuffleQuestions();
+        quizData = allQuestions.slice(0, 10);
+        showQuestion();
+        timer = setInterval(updateTimer, 1000);
+        document.getElementById("instructions").style.display = "none";
+        document.getElementById("quiz-container").style.display = "block";
+    }
+
+    function shuffleQuestions() {
+         for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+    function showQuestion() {
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const questionNumberElement = document.getElementById("question-number");
+        const prevButton = document.getElementById("prevButton");
+        const currentQuestion = quizData[currentQuestionIndex];
+
+        questionNumberElement.textContent = "Question " + (currentQuestionIndex + 1) + " of 10";
+        questionElement.textContent = currentQuestion.question;
+        optionsElement.innerHTML = "";
+
+        currentQuestion.options.forEach((option, index) => {
+            const radioBtn = document.createElement("input");
+            radioBtn.type = "radio";
+            radioBtn.name = "answer";
+            radioBtn.value = index;
+            radioBtn.checked = index === currentQuestion.selectedAnswer;
+            radioBtn.addEventListener("change", () => selectOption(index));
+
+            const label = document.createElement("label");
+            label.textContent = String.fromCharCode(65 + index) + ") " + option;
+
+            optionsElement.appendChild(radioBtn);
+            optionsElement.appendChild(label);
+            optionsElement.appendChild(document.createElement("br"));
+        });
+
+        prevButton.disabled = currentQuestionIndex === 0;
+    }
+
+    function selectOption(index) {
+        quizData[currentQuestionIndex].selectedAnswer = index;
+    }
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            const selectedRadio = document.querySelector('input[name="answer"]:checked');
+            if (selectedRadio) {
+                quizData[currentQuestionIndex].selectedAnswer = parseInt(selectedRadio.value);
+            }
+            currentQuestionIndex--;
+            showQuestion();
+            resetTimer();
+        }
+    }
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+            resetTimer();
+        } else {
+            document.getElementById("nextButton").disabled = true;
+            document.getElementById("submitButton").style.display = "block";
+        }
+    }
+
+    function updateTimer() {
+        const timeElement = document.getElementById("time");
+        let time = parseInt(timeElement.textContent);
+
+        if (time > 0) {
+            time--;
+            timeElement.textContent = time;
+        } else {
+            unansweredQuestions++;
+            if (unansweredQuestions >= swapLimit) {
+                redirectToBlockPage();
+            } else {
+                replaceQuestion();
+            }
+        }
+    }
+
+    function replaceQuestion() {
+        const randomIndex = Math.floor(Math.random() * allQuestions.length);
+        quizData[currentQuestionIndex] = allQuestions[randomIndex];
+        showQuestion();
+        resetTimer();
+    }
+
+    function redirectToBlockPage() {
+        window.location.href = 'trydance.html';
+    }
+
+    function resetTimer() {
+        const timeElement = document.getElementById("time");
+        timeElement.textContent = 15;
+    }
+
+    function submitQuiz() {
+    clearInterval(timer);
+
+    if (currentQuestionIndex === quizData.length - 1) {
+        quizData.forEach((question) => {
+            if (question.selectedAnswer === question.correctAnswer) {
+                correctAnswers++;
+            }
+        });
+
+        if (correctAnswers >= 5) {
+             window.location.href = "dancemem.html";
+        } else {
+             alert("You need to answer at least 5 questions correctly to proceed to after.html.");
+             window.location.href = "home.html";
+        }
+
+        document.getElementById("prevButton").disabled = true;
+        document.getElementById("nextButton").disabled = true;
+        document.getElementById("submitButton").style.display = "none";
+    } else {
+        alert("Please complete all 10 questions before submitting.");
+    }
+}
+
+
+function resetQuiz() {
+     currentQuestionIndex = 0;
+    correctAnswers = 0;
+    unansweredQuestions = 0;
+    clearInterval(timer);
+    window.location.href = "dancequiz.html";  
+}
+
+    const allQuestions = [
+        {
+            question: "Who is considered the 'Father of Ballet'?",
+            options: ["Mikhail Baryshnikov", "George Balanchine", "Rudolf Nureyev", "Jean-Georges Noverre"],
+            correctAnswer: 3
+        },
+        {
+            question: "Which dance style originated in the Caribbean and features fast hip movements?",
+            options: ["Salsa", "Ballet", "Tango", "Merengue"],
+            correctAnswer: 0
+        },
+        {
+            question: "Which of these dances originated in Argentina?",
+            options: ["Flamenco", "Samba", "Tango", "Waltz"],
+            correctAnswer: 2
+        },
+        {
+            question: "Which dance style emphasizes intricate footwork and rhythmic patterns?",
+            options: ["Tap dance", "Ballet", "Contemporary", "Irish dance"],
+            correctAnswer: 0
+        },
+        {
+            question: "What is the national dance of Brazil?",
+            options: ["Tango", "Samba", "Flamenco", "Cha-Cha"],
+            correctAnswer: 1
+        },
+        {
+            question: "Which dance form originated in the African-American communities of the United States?",
+            options: ["Jazz", "Ballet", "Waltz", "Foxtrot"],
+            correctAnswer: 0
+        },
+        {
+            question: "Which of the following is a traditional dance form of Ireland?",
+            options: ["Salsa", "Ballet", "Flamenco", "Riverdance"],
+            correctAnswer: 3
+        },
+        {
+            question: "Which dance style is known for its graceful and flowing movements?",
+            options: ["Breakdance", "Hip-hop", "Ballet", "Tango"],
+            correctAnswer: 2
+        },
+        {
+            question: "Which Indian classical dance form originated in the state of Odisha?",
+            options: ["Kathak", "Bharatanatyam", "Kuchipudi", "Odissi"],
+            correctAnswer: 3
+        },
+        {
+            question: "Which dance style is characterized by its syncopated rhythm and improvisational style?",
+            options: ["Swing", "Ballet", "Flamenco", "Hip-hop"],
+            correctAnswer: 0
+        },
+        {
+            question: "What is the traditional dance of Hawaii called?",
+            options: ["Hula", "Samba", "Flamenco", "Bharatanatyam"],
+            correctAnswer: 0
+        },
+        {
+            question: "Which dance style is characterized by its use of percussive footwork and syncopated rhythms?",
+            options: ["Belly dance", "Tap dance", "Breakdance", "Salsa"],
+            correctAnswer: 1
+        },
+        {
+            question: "What is the famous dance from Punjab, India, known for its energetic movements?",
+            options: ["Bharatanatyam", "Kuchipudi", "Kathak", "Bhangra"],
+            correctAnswer: 3
+        },
+        {
+            question: "Who popularized the moonwalk dance move?",
+            options: ["Michael Jackson", "Elvis Presley", "Fred Astaire", "James Brown"],
+            correctAnswer: 0
+        },
+        {
+            question: "Which dance style originated in the Harlem neighborhood of New York City during the 1920s?",
+            options: ["Salsa", "Lindy Hop", "Foxtrot", "Waltz"],
+            correctAnswer: 1
+        },
+        {
+            question: "What is the name of the famous Argentine tango singer?",
+            options: ["Carlos Gardel", "Pablo Ziegler", "Astor Piazzolla", "Sebastian Piana"],
+            correctAnswer: 0
+        },
+        {
+            question: "In which Indian state is the classical dance form Kathakali traditionally performed?",
+            options: ["Tamil Nadu", "Kerala", "Karnataka", "Maharashtra"],
+            correctAnswer: 1
+        },
+        {
+            question: "Which dance style was developed in the African-American communities of Harlem, New York City, in the 1920s?",
+            options: ["Jazz", "Ballet", "Tap dance", "Ballroom"],
+            correctAnswer: 0
+        },
+        {
+            question: "What is the primary feature of flamenco dancing?",
+            options: ["Use of castanets", "Incorporation of ballet moves", "Heavy emphasis on footwork", "Use of colorful costumes"],
+            correctAnswer: 2
+        }
+    ];
+</script>
+ </body>
+</html>
