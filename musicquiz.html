@@ -1,0 +1,682 @@
+ 
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Music Quiz</title>
+    <style>
+       body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+            background: url('images/msc.jpg') center/cover no-repeat;
+
+
+        }
+
+
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #f9fdfc;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #030303;
+            font-size: 16px;
+        }
+
+
+        .container h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+
+        .container ul {
+            list-style: none;
+            padding-left: 0;
+            text-align: left;
+        }
+
+
+        .container li {
+            margin-bottom: 10px;
+        }
+
+
+        .container button {
+            background-color: #25204a;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+
+        .container button:hover {
+            background-color: #445c70;
+        }
+
+
+        #quiz-container {
+            display: none;
+            max-width: 800px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            color: #060606;
+            font-size: 16px;
+        }
+
+
+        #quiz-container #question-number {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #question {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #options {
+            text-align: left;
+        }
+
+
+        #quiz-container input[type="radio"] {
+            margin-right: 5px;
+        }
+
+
+        #quiz-container label {
+            margin-bottom: 10px;
+            display: block;
+        }
+
+
+        #quiz-container #timer {
+            font-size: 14px;
+            color: #000000;
+            margin-bottom: 10px;
+        }
+
+
+        #quiz-container #prevButton,
+        #quiz-container #nextButton,
+        #quiz-container #submitButton {
+            background-color: #262146;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 10px;
+            font-size: 14px;
+        }
+
+
+        #quiz-container #submitButton {
+            background-color: #f44336;
+            display: none;  
+        }
+
+
+        #quiz-container #submitButton:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+
+
+<div class="container" id="instructions">
+     <h2>Instructions:</h2>
+    <ul>
+        <li>Number of Questions: The quiz consists of 10 multiple-choice questions related to Indian sports.</li>
+        <li>Time Limit: You have 15 seconds to answer each question. If you fail to select an option within the time limit, the question will be automatically replaced with another one.</li>
+        <li>Navigation: Use the "Next" button to move to the next question and the "Previous" button to go back to the previous question.</li>
+        <li>Submitting the Quiz: Once you've answered all 10 questions, the "Submit Quiz" button will appear. Click it to submit your answers.</li>
+        <li>Scoring: Your score will be calculated based on the number of correct answers. You need to answer at least 5 questions correctly to proceed to the next page.</li>
+        <li>Timer: A timer will be displayed for each question, showing the time remaining to answer.</li>
+        <li>Consecutive Unanswered Questions: If you fail to answer three consecutive questions within the time limit, you will be redirected, and you won't be able to attempt the quiz again for the next 24 hours.</li>
+        <li>Enjoy the Quiz: Immerse yourself in the world of Indian sports and test your knowledge! Good luck!</li>
+    </ul>
+
+
+    <button onclick="startQuiz()">Start Quiz</button>
+</div>
+
+
+<div class="container" id="quiz-container">
+
+
+    <div id="question-number"></div>
+
+
+    <div id="question"></div>
+
+
+    <div id="options"></div>
+
+
+    <div id="timer">Time remaining: <span id="time">15</span> seconds</div>
+
+
+    <button id="prevButton" onclick="prevQuestion()" disabled>Previous</button>
+    <button id="nextButton" onclick="nextQuestion()">Next</button>
+    <button id="submitButton" onclick="submitQuiz()">Submit Quiz</button>
+</div>
+
+
+<script>
+    let swapCounter = 0;
+    let consecutiveUnanswered = 0;
+    let lastSwapTimestamp = null;
+    const swapLimit = 3;
+    const swapInterval = 24 * 60 * 60 * 1000;
+
+
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let correctAnswers = 0;
+    let unansweredQuestions = 0;
+    let timer;
+
+
+    function startQuiz() {
+        shuffleQuestions();
+        quizData = allQuestions.slice(0, 10);
+        showQuestion();
+        timer = setInterval(updateTimer, 1000);
+        document.getElementById("instructions").style.display = "none";
+        document.getElementById("quiz-container").style.display = "block";
+    }
+
+
+    function shuffleQuestions() {
+
+
+        for (let i = allQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [allQuestions[i], allQuestions[j]] = [allQuestions[j], allQuestions[i]];
+        }
+    }
+
+
+    function showQuestion() {
+        const questionElement = document.getElementById("question");
+        const optionsElement = document.getElementById("options");
+        const questionNumberElement = document.getElementById("question-number");
+        const prevButton = document.getElementById("prevButton");
+        const currentQuestion = quizData[currentQuestionIndex];
+
+
+        questionNumberElement.textContent = `Question ${currentQuestionIndex + 1} of 10`;
+        questionElement.textContent = currentQuestion.question;
+        optionsElement.innerHTML = "";
+
+
+        currentQuestion.options.forEach((option, index) => {
+            const radioBtn = document.createElement("input");
+            radioBtn.type = "radio";
+            radioBtn.name = "answer";
+            radioBtn.value = index;
+            radioBtn.addEventListener("change", () => selectOption(index));
+
+
+            const label = document.createElement("label");
+            label.textContent = String.fromCharCode(65 + index) + ') ' + option;
+
+
+            optionsElement.appendChild(radioBtn);
+            optionsElement.appendChild(label);
+            optionsElement.appendChild(document.createElement("br"));
+        });
+
+
+        prevButton.disabled = currentQuestionIndex === 0;
+    }
+
+
+    function selectOption(index) {
+        quizData[currentQuestionIndex].selectedAnswer = index;
+    }
+
+
+    function prevQuestion() {
+        if (currentQuestionIndex > 0) {
+            const selectedRadio = document.querySelector('input[name="answer"]:checked');
+            if (selectedRadio) {
+                quizData[currentQuestionIndex].selectedAnswer = parseInt(selectedRadio.value);
+            }
+            currentQuestionIndex--;
+            showQuestion();
+            resetTimer();
+            const previousSelectedAnswer = quizData[currentQuestionIndex].selectedAnswer;
+            if (previousSelectedAnswer !== undefined) {
+                const radioBtns = document.querySelectorAll('input[name="answer"]');
+                radioBtns[previousSelectedAnswer].checked = true;
+            }
+        }
+    }
+
+
+    function nextQuestion() {
+        if (currentQuestionIndex < quizData.length - 1) {
+            currentQuestionIndex++;
+            showQuestion();
+            resetTimer();
+        } else {
+            document.getElementById("nextButton").disabled = true;
+            document.getElementById("submitButton").style.display = "block";
+        }
+    }
+
+
+    function updateTimer() {
+    const timeElement = document.getElementById("time");
+    let time = parseInt(timeElement.textContent);
+
+
+    if (time > 0) {
+        time--;
+        timeElement.textContent = time;
+    } else {
+        unansweredQuestions++;
+        if (unansweredQuestions >= 3) {
+            redirectToBlockPage();
+        } else {
+            replaceQuestion();
+        }
+    }
+}
+
+
+function replaceQuestion() {
+    const randomIndex = Math.floor(Math.random() * allQuestions.length);
+    quizData[currentQuestionIndex] = allQuestions[randomIndex];
+    showQuestion();
+    resetTimer();
+}
+
+
+function redirectToBlockPage() {
+    window.location.href = "trymusic.html";
+}
+
+
+
+
+    function resetTimer() {
+        const timeElement = document.getElementById("time");
+        timeElement.textContent = 15;
+    }
+
+
+    function submitQuiz() {
+    clearInterval(timer);
+
+
+    if (currentQuestionIndex === quizData.length - 1) {
+        quizData.forEach((question) => {
+            if (question.selectedAnswer === question.correctAnswer) {
+                correctAnswers++;
+            }
+        });
+
+
+        if (correctAnswers >= 5) {
+
+
+            window.location.href = "musicmem.html";
+        } else {
+
+
+            alert("You need to answer at least 5 questions correctly to proceed to after.html.");
+ 
+            window.location.href = "home.html";
+        }
+
+
+        document.getElementById("prevButton").disabled = true;
+        document.getElementById("nextButton").disabled = true;
+        document.getElementById("submitButton").style.display = "none";
+    } else {
+        alert("Please complete all 10 questions before submitting.");
+    }
+}
+
+
+
+
+function resetQuiz() {
+
+
+    currentQuestionIndex = 0;
+    correctAnswers = 0;
+    unansweredQuestions = 0;
+    clearInterval(timer);
+    window.location.href = "music.html";  
+}
+
+
+    const allQuestions = [
+    {
+    Question: 1,
+    question: "Who is known as the 'King of Pop'?",
+    options: ["Michael Jackson", "Elvis Presley", "Madonna", "Prince"],
+    correctAnswer: 0
+},
+{
+    Question: 2,
+    question: "Which band released the album 'The Dark Side of the Moon'?",
+    options: ["Pink Floyd", "Led Zeppelin", "The Beatles", "Queen"],
+    correctAnswer: 0
+},
+{
+    Question: 3,
+    question: "Who is the lead vocalist of the band Queen?",
+    options: ["Freddie Mercury", "Roger Daltrey", "Robert Plant", "David Bowie"],
+    correctAnswer: 0
+},
+{
+    Question: 4,
+    question: "What instrument did Jimi Hendrix famously play?",
+    options: ["Electric Guitar", "Drums", "Piano", "Bass Guitar"],
+    correctAnswer: 0
+},
+{
+    Question: 5,
+    question: "Which artist recorded the album 'Thriller'?",
+    options: ["Michael Jackson", "Madonna", "Prince", "Whitney Houston"],
+    correctAnswer: 0
+},
+{
+    Question: 6,
+    question: "What is the name of Beyoncé's debut solo album?",
+    options: ["Dangerously in Love", "Lemonade", "B'Day", "4"],
+    correctAnswer: 0
+},
+{
+    Question: 7,
+    question: "Who composed the opera 'The Marriage of Figaro'?",
+    options: ["Wolfgang Amadeus Mozart", "Giuseppe Verdi", "Ludwig van Beethoven", "Gioachino Rossini"],
+    correctAnswer: 0
+},
+{
+    Question: 8,
+    question: "Which artist released the hit single 'Shape of You'?",
+    options: ["Ed Sheeran", "Justin Bieber", "Adele", "Taylor Swift"],
+    correctAnswer: 0
+},
+{
+    Question: 9,
+    question: "Who is known as the 'Queen of Soul'?",
+    options: ["Aretha Franklin", "Whitney Houston", "Tina Turner", "Diana Ross"],
+    correctAnswer: 0
+},
+{
+    Question: 10,
+    question: "Which country is famous for flamenco music?",
+    options: ["Spain", "Italy", "Brazil", "Argentina"],
+    correctAnswer: 0
+},
+{
+    Question: 11,
+    question: "Who is the lead guitarist of the band Led Zeppelin?",
+    options: ["Jimmy Page", "Eric Clapton", "Keith Richards", "David Gilmour"],
+    correctAnswer: 0
+},
+{
+    Question: 12,
+    question: "Which famous rapper's real name is Marshall Mathers?",
+    options: ["Eminem", "Kanye West", "Jay-Z", "Drake"],
+    correctAnswer: 0
+},
+{
+    Question: 13,
+    question: "Who composed the ballet 'Swan Lake'?",
+    options: ["Pyotr Ilyich Tchaikovsky", "Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach"],
+    correctAnswer: 0
+},
+{
+    Question: 14,
+    question: "Which band released the album 'Abbey Road'?",
+    options: ["The Beatles", "The Rolling Stones", "Led Zeppelin", "Pink Floyd"],
+    correctAnswer: 0
+},
+{
+    Question: 15,
+    question: "What is the name of Taylor Swift's first album?",
+    options: ["Taylor Swift", "Fearless", "Speak Now", "Red"],
+    correctAnswer: 0
+},
+{
+    Question: 16,
+    question: "Who is known for the hit single 'Bohemian Rhapsody'?",
+    options: ["Queen", "The Beatles", "Led Zeppelin", "The Rolling Stones"],
+    correctAnswer: 0
+},
+{
+    Question: 17,
+    question: "Which country is known for the origins of reggae music?",
+    options: ["Jamaica", "Brazil", "Cuba", "Trinidad and Tobago"],
+    correctAnswer: 0
+},
+{
+    Question: 18,
+    question: "Who composed the opera 'Carmen'?",
+    options: ["Georges Bizet", "Giuseppe Verdi", "Giacomo Puccini", "Richard Wagner"],
+    correctAnswer: 0
+},
+{
+    Question: 19,
+    question: "Which artist released the album '21'?",
+    options: ["Adele", "Taylor Swift", "Rihanna", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 20,
+    question: "What is the name of the famous Italian opera singer known for his powerful tenor voice?",
+    options: ["Luciano Pavarotti", "Andrea Bocelli", "Plácido Domingo", "José Carreras"],
+    correctAnswer: 0
+},
+{
+    Question: 21,
+    question: "Who is the lead singer of the band U2?",
+    options: ["Bono", "Chris Martin", "Thom Yorke", "Dave Grohl"],
+    correctAnswer: 0
+},
+{
+    Question: 22,
+    question: "Which famous composer is known for his 'Moonlight Sonata'?",
+    options: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Franz Schubert"],
+    correctAnswer: 0
+},
+{
+    Question: 23,
+    question: "What is the name of Rihanna's first studio album?",
+    options: ["Music of the Sun", "Good Girl Gone Bad", "Rated R", "Loud"],
+    correctAnswer: 0
+},
+{
+    Question: 24,
+    question: "Who is known for the hit single 'Purple Rain'?",
+    options: ["Prince", "Michael Jackson", "Elton John", "David Bowie"],
+    correctAnswer: 0
+},
+{
+    Question: 25,
+    question: "What is the name of Bob Marley's band?",
+    options: ["The Wailers", "The Beatles", "The Rolling Stones", "The Beach Boys"],
+    correctAnswer: 0
+},
+{
+    Question: 26,
+    question: "Which artist released the album 'Reputation'?",
+    options: ["Taylor Swift", "Adele", "Rihanna", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 27,
+    question: "What is the name of the legendary producer known as the 'Fifth Beatle'?",
+    options: ["George Martin", "Brian Epstein", "Stuart Sutcliffe", "Pete Best"],
+    correctAnswer: 0
+},
+{
+    Question: 28,
+    question: "Who is known for the hit single 'My Heart Will Go On'?",
+    options: ["Celine Dion", "Mariah Carey", "Whitney Houston", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 29,
+    question: "Which country is known for the origins of tango music?",
+    options: ["Argentina", "Spain", "Brazil", "Italy"],
+    correctAnswer: 0
+},
+{
+    Question: 30,
+    question: "Who composed 'The Barber of Seville'?",
+    options: ["Gioachino Rossini", "Wolfgang Amadeus Mozart", "Giuseppe Verdi", "Richard Wagner"],
+    correctAnswer: 0
+},
+{
+    Question: 31,
+    question: "Which artist released the album 'Back to Black'?",
+    options: ["Amy Winehouse", "Adele", "Rihanna", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 32,
+    question: "Who is known as the 'Godfather of Soul'?",
+    options: ["James Brown", "Ray Charles", "Stevie Wonder", "Otis Redding"],
+    correctAnswer: 0
+},
+{
+    Question: 33,
+    question: "What is the name of the legendary music festival held in Tennessee, USA?",
+    options: ["Woodstock", "Coachella", "Bonnaroo", "Glastonbury"],
+    correctAnswer: 2
+},
+{
+    Question: 34,
+    question: "Who composed the opera 'The Magic Flute'?",
+    options: ["Wolfgang Amadeus Mozart", "Ludwig van Beethoven", "Johann Sebastian Bach", "Richard Wagner"],
+    correctAnswer: 0
+},
+{
+    Question: 35,
+    question: "Which artist released the album 'Rumours'?",
+    options: ["Fleetwood Mac", "The Beatles", "Led Zeppelin", "The Rolling Stones"],
+    correctAnswer: 0
+},
+{
+    Question: 36,
+    question: "Who is known for the hit single 'Billie Jean'?",
+    options: ["Michael Jackson", "Prince", "Elvis Presley", "Madonna"],
+    correctAnswer: 0
+},
+{
+    Question: 37,
+    question: "What is the name of the American folk singer known for his protest songs, such as 'Blowin' in the Wind'?",
+    options: ["Bob Dylan", "Johnny Cash", "Pete Seeger", "Woody Guthrie"],
+    correctAnswer: 0
+},
+{
+    Question: 38,
+    question: "Which artist released the album 'Purple Rain'?",
+    options: ["Prince", "Michael Jackson", "Elton John", "David Bowie"],
+    correctAnswer: 0
+},
+{
+    Question: 39,
+    question: "Who composed the opera 'La Traviata'?",
+    options: ["Giuseppe Verdi", "Wolfgang Amadeus Mozart", "Gioachino Rossini", "Giacomo Puccini"],
+    correctAnswer: 0
+},
+{
+    Question: 40,
+    question: "Which country is famous for the origins of bossa nova music?",
+    options: ["Brazil", "Argentina", "Spain", "Cuba"],
+    correctAnswer: 0
+},
+{
+    Question: 41,
+    question: "Who composed the '1812 Overture'?",
+    options: ["Pyotr Ilyich Tchaikovsky", "Ludwig van Beethoven", "Johann Sebastian Bach", "Franz Schubert"],
+    correctAnswer: 0
+},
+{
+    Question: 42,
+    question: "Which artist released the album 'Born to Die'?",
+    options: ["Lana Del Rey", "Adele", "Rihanna", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 43,
+    question: "Who is known as the 'Queen of Disco'?",
+    options: ["Donna Summer", "Gloria Gaynor", "Cher", "Diana Ross"],
+    correctAnswer: 0
+},
+{
+    Question: 44,
+    question: "What is the name of the British rock band known for the hit 'Smoke on the Water'?",
+    options: ["Deep Purple", "Led Zeppelin", "Pink Floyd", "The Rolling Stones"],
+    correctAnswer: 0
+},
+{
+    Question: 45,
+    question: "Who composed 'The Nutcracker'?",
+    options: ["Pyotr Ilyich Tchaikovsky", "Ludwig van Beethoven", "Johann Sebastian Bach", "Wolfgang Amadeus Mozart"],
+    correctAnswer: 0
+},
+{
+    Question: 46,
+    question: "Which artist released the album 'Good Girl Gone Bad'?",
+    options: ["Rihanna", "Taylor Swift", "Adele", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 47,
+    question: "Who is known for the hit single 'Smells Like Teen Spirit'?",
+    options: ["Nirvana", "Pearl Jam", "Soundgarden", "Alice in Chains"],
+    correctAnswer: 0
+},
+{
+    Question: 48,
+    question: "What is the name of the French electronic music duo known for their helmets?",
+    options: ["Daft Punk", "The Chemical Brothers", "Justice", "Air"],
+    correctAnswer: 0
+},
+{
+    Question: 49,
+    question: "Which artist released the album '25'?",
+    options: ["Adele", "Taylor Swift", "Rihanna", "Beyoncé"],
+    correctAnswer: 0
+},
+{
+    Question: 50,
+    question: "What is the name of the famous Italian composer known for his operas such as 'La bohème' and 'Tosca'?",
+    options: ["Giacomo Puccini", "Wolfgang Amadeus Mozart", "Giuseppe Verdi", "Richard Wagner"],
+    correctAnswer: 0
+}
+   
+];
+</script>
+ </body>
+</html>
+ 
